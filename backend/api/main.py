@@ -5,7 +5,11 @@ app = FastAPI()
 
 @app.get("/")
 def root():
-    return {"message": "PDF Extractor funcionando!", "port": os.getenv("PORT")}
+    return {"message": "PDF Extractor funcionando!"}
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
 
 if __name__ == "__main__":
     import uvicorn
