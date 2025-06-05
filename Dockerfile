@@ -1,30 +1,39 @@
-FROM python:3.10-slim
+# Use Python slim para base menor
+FROM python:3.10-slim-bullseye
 
-# Instalar dependências básicas
+# Instalar dependências do sistema PRIMEIRO (raramente mudam)
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libgl1 \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
     libxrender-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libgomp1 \
+    libgl1-mesa-glx \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
-# Diretório de trabalho
+# Definir diretório de trabalho
 WORKDIR /app
 
-# Copiar arquivos
-COPY . /app
+# CRÍTICO: Copiar requirements.txt PRIMEIRO (para cache de dependências)
+COPY requirements.txt .
 
-# Instalar dependências Python
-RUN pip install --upgrade pip && \
+# Cache mount para pip - OTIMIZAÇÃO RAILWAY
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Pré-carregar modelos do EasyOCR (Português)
-RUN python -c "import easyocr; easyocr.Reader(['pt'], gpu=False)"
+# Pré-baixar modelos EasyOCR (cache entre deploys)
+# Isso evita download a cada deploy
+RUN python -c "import easyocr; print('Baixando modelos...'); reader = easyocr.Reader(['pt'], gpu=False, download_enabled=True); print('Modelos baixados e em cache!')"
+
+# Copiar código da aplicação POR ÚLTIMO (muda frequentemente)
+COPY . .
 
 # Expor porta
 EXPOSE 8080
 
-# Comando padrão
+# Comando de inicialização
 CMD ["uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8080"]
