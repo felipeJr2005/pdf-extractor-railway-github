@@ -84,11 +84,9 @@ def extract_text_with_ocr(pdf_bytes: bytes) -> Dict:
             pix = page.get_pixmap(matrix=mat)
             img_data = pix.tobytes("png")
             
-            # Converter para PIL Image
-            image = Image.open(io.BytesIO(img_data))
-            
-            # Extrair texto com EasyOCR
-            results = reader.readtext(image, detail=0, paragraph=True)
+            # EasyOCR pode receber bytes diretamente
+            # Extrair texto com EasyOCR usando bytes da imagem
+            results = reader.readtext(img_data, detail=0, paragraph=True)
             
             # Combinar todo o texto da página
             page_text = ' '.join(results) if results else ""
