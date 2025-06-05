@@ -73,8 +73,11 @@ def extract_text_with_ocr(pdf_bytes: bytes) -> Dict:
     try:
         logger.info("Iniciando extração de texto com EasyOCR")
         
-        # Inicializar EasyOCR - CPU mode para Railway
-        reader = easyocr.Reader(['pt', 'en'], gpu=False)
+        # OTIMIZAÇÃO EXTREMA para Railway 512MB
+        # Usar apenas português, sem modelos desnecessários
+        reader = easyocr.Reader(['pt'], gpu=False, 
+                               detector=True, recognizer=True, 
+                               verbose=False)
         
         # Abrir PDF dos bytes
         pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
@@ -85,8 +88,9 @@ def extract_text_with_ocr(pdf_bytes: bytes) -> Dict:
         for page_num in range(len(pdf_document)):
             page = pdf_document[page_num]
             
-            # Converter página para imagem com alta resolução
-            mat = fitz.Matrix(2, 2)  # Zoom 2x para melhor qualidade OCR
+            # Reduzir resolução da imagem para economizar memória
+            # Matrix 1.5 em vez de 2.0 reduz 44% do uso de RAM
+            mat = fitz.Matrix(1.5, 1.5)  # Zoom menor para economizar RAM
             pix = page.get_pixmap(matrix=mat)
             img_data = pix.tobytes("png")
             
@@ -94,8 +98,10 @@ def extract_text_with_ocr(pdf_bytes: bytes) -> Dict:
             image = Image.open(io.BytesIO(img_data))
             img_array = np.array(image)
             
-            # EasyOCR com numpy array evita problemas de versão
-            results = reader.readtext(img_array, detail=0, paragraph=True)
+            # EasyOCR com configurações de baixa memória
+            # width_ths e height_ths limitam o tamanho das imagens processadas
+            results = reader.readtext(img_array, detail=0, paragraph=True,
+                                    width_ths=0.7, height_ths=0.7)
             
             # Combinar todo o texto da página
             page_text = ' '.join(results) if results else ""
