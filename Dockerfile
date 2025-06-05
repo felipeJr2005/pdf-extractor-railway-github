@@ -30,4 +30,4 @@ RUN python3 -c "import easyocr; easyocr.Reader(['pt'], gpu=False)"
 EXPOSE 8080
 
 # Etapa 8: Comando para rodar a API
-CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8080"]
