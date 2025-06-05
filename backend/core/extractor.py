@@ -1,29 +1,40 @@
-import fitz  # PyMuPDF
-from typing import Optional
+import easyocr
+import fitz
+from PIL import Image
+import io
 
-def extract_text_from_pdf(pdf_bytes: bytes) -> dict:
-    """Extrai texto de PDF usando PyMuPDF"""
+def extract_text_with_ocr(pdf_bytes: bytes) -> Dict:
+    """Extrai texto de PDF escaneado usando EasyOCR"""
     try:
-        # Abrir PDF dos bytes
+        reader = easyocr.Reader(['pt', 'en'])  # Português e Inglês
         pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
         
         text_content = []
         
-        # Extrair texto de cada página
         for page_num in range(len(pdf_document)):
             page = pdf_document[page_num]
-            text = page.get_text()
             
-            if text.strip():  # Se tem texto
+            # Converter página para imagem
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # 2x zoom
+            img_data = pix.tobytes("png")
+            
+            # EasyOCR
+            results = reader.readtext(img_data)
+            
+            # Extrair texto
+            page_text = ' '.join([result[1] for result in results])
+            
+            if page_text.strip():
                 text_content.append({
                     "page": page_num + 1,
-                    "text": text.strip()
+                    "text": page_text.strip()
                 })
         
         pdf_document.close()
         
         return {
             "success": True,
+            "method": "OCR",
             "pages": len(text_content),
             "content": text_content
         }
