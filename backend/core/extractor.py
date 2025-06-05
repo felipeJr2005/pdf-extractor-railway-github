@@ -1,10 +1,15 @@
 import fitz  # PyMuPDF
 import easyocr
 from PIL import Image
+import PIL
 import io
 import numpy as np
 from typing import Dict, List, Optional
 import logging
+
+# FIX para Pillow 10+ compatibilidade com EasyOCR
+# Solução oficial do GitHub Issue #1077
+PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
