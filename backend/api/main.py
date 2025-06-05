@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from backend.api.routes.extract import router as extract_router
+from .routes.extract import router as extract_router
 
 app = FastAPI()
 
@@ -13,3 +13,5 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
+
+
