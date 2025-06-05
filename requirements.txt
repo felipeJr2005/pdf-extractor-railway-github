@@ -5,3 +5,4 @@ python-multipart==0.0.6
 easyocr==1.7.0
 torch
 torchvision
+pillow==9.5.0
