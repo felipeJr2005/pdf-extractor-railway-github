@@ -2,6 +2,7 @@ import fitz  # PyMuPDF
 import easyocr
 from PIL import Image
 import io
+import numpy as np
 from typing import Dict, List, Optional
 import logging
 
@@ -84,9 +85,12 @@ def extract_text_with_ocr(pdf_bytes: bytes) -> Dict:
             pix = page.get_pixmap(matrix=mat)
             img_data = pix.tobytes("png")
             
-            # EasyOCR pode receber bytes diretamente
-            # Extrair texto com EasyOCR usando bytes da imagem
-            results = reader.readtext(img_data, detail=0, paragraph=True)
+            # Converter para numpy array (formato que EasyOCR prefere)
+            image = Image.open(io.BytesIO(img_data))
+            img_array = np.array(image)
+            
+            # EasyOCR com numpy array evita problemas de versão
+            results = reader.readtext(img_array, detail=0, paragraph=True)
             
             # Combinar todo o texto da página
             page_text = ' '.join(results) if results else ""
