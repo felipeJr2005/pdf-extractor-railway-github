@@ -1,7 +1,11 @@
 from fastapi import FastAPI
-from .routes.extract import router as extract_router
+from backend.api.routes.extract import router as extract_router
 
-app = FastAPI()
+app = FastAPI(
+    title="PDF Text Extractor",
+    description="API para extração de texto de PDFs usando PyMuPDF e EasyOCR",
+    version="1.0.0"
+)
 
 # Incluir rotas de extração
 app.include_router(extract_router)
@@ -13,5 +17,3 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
-
-
