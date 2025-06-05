@@ -1,25 +1,33 @@
-FROM python:3.10-slim-bullseye
+# Etapa 1: Imagem base
+FROM python:3.10-slim
 
-# Instalar dependências do sistema para EasyOCR
+# Etapa 2: Instalar dependências do sistema
 RUN apt-get update && apt-get install -y \
-    libglib2.0-0 \
+    build-essential \
+    libgl1-mesa-glx \
+    poppler-utils \
+    tesseract-ocr \
     libsm6 \
     libxext6 \
     libxrender-dev \
-    libgomp1 \
-    libgl1-mesa-glx \
     && rm -rf /var/lib/apt/lists/*
 
-ENV PYTHONUNBUFFERED True
-ENV APP_HOME /app
-WORKDIR $APP_HOME
+# Etapa 3: Criar diretório de trabalho
+WORKDIR /app
 
-# Copiar requirements primeiro para cache de layers
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+# Etapa 4: Copiar arquivos do projeto
+COPY . /app
 
-# Copiar resto do código
-COPY . ./
+# Etapa 5: Instalar dependências Python
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Comando será definido pelo Railway via railway.toml
-CMD ["uvicorn", "backend.api.main:app", "--host", "0.0.0.0", "--port", "8080"]
+# Etapa 6: Baixar modelos do EasyOCR durante o build
+ENV HOME=/app
+RUN python3 -c "import easyocr; easyocr.Reader(['pt'], gpu=False)"
+
+# Etapa 7: Expor a porta usada pelo Uvicorn
+EXPOSE 8080
+
+# Etapa 8: Comando para rodar a API
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8080"]
